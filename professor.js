@@ -1,6 +1,6 @@
 // Importa Firebase da CDN
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, onSnapshot, query, where, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // Configuração Firebase
 const firebaseConfig = {
@@ -101,6 +101,7 @@ function gerenciarAlunos(nomeTurma) {
                 <strong>${docSnap.id}</strong> - Progresso: ${data.progresso} | Moedas: ${data.coins} | Tempo: ${data.tempoRestante || 'N/A'}s
                 <button onclick="resetarAluno('${docSnap.id}')">♻️ Resetar Aluno</button>
                 <button onclick="resetarTempo('${docSnap.id}')">⏳ Resetar Tempo</button>
+                <button onclick="excluirAluno('${docSnap.id}')">❌ Excluir Aluno</button>
             `;
 
             lista.appendChild(li);
@@ -122,6 +123,15 @@ async function resetarAluno(nome) {
     alert(`Progresso do aluno ${nome} resetado!`);
 }
 
+// Excluir um aluno (NOVA FUNÇÃO)
+async function excluirAluno(nome) {
+  if (confirm(`Tem certeza que deseja excluir o aluno ${nome}? Esta ação é irreversível.`)) {
+    const ref = doc(db, "alunos", nome);
+    await deleteDoc(ref);
+    alert(`Aluno ${nome} excluído com sucesso!`);
+  }
+}
+
 // ===================== EXPOR FUNÇÕES PARA O HTML =====================
 window.loginProfessor = loginProfessor;
 window.criarTurma = criarTurma;
@@ -129,3 +139,4 @@ window.carregarTurmas = carregarTurmas;
 window.gerenciarAlunos = gerenciarAlunos;
 window.resetarTempo = resetarTempo;
 window.resetarAluno = resetarAluno;
+window.excluirAluno = excluirAluno; // Expõe a nova função
