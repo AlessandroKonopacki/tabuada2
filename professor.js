@@ -17,6 +17,21 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+// Senha do professor (Você pode mudar esta senha!)
+const SENHA_PROFESSOR = "atomo123'";
+
+// Função para fazer login
+function login() {
+  const senhaDigitada = document.getElementById("senhaProf").value;
+  if (senhaDigitada === SENHA_PROFESSOR) {
+    document.getElementById("login").classList.add("hidden");
+    document.getElementById("painelProfessor").classList.remove("hidden");
+    carregarAlunos(); // Só carrega a lista após o login
+  } else {
+    alert("Senha incorreta!");
+  }
+}
+
 // Carregar lista em tempo real
 function carregarAlunos() {
   const alunosRef = collection(db, "alunos");
@@ -51,9 +66,7 @@ async function resetarAluno(nome) {
   await updateDoc(ref, { progresso: 0, coins: 10 });
 }
 
-// Expõe funções ao HTML
+// Expõe funções ao HTML para que os botões funcionem
+window.login = login;
 window.liberarCoins = liberarCoins;
 window.resetarAluno = resetarAluno;
-
-// AQUI ESTÁ A CORREÇÃO: Chame a função quando a página carregar
-carregarAlunos();
