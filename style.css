@@ -19,7 +19,43 @@ h1 {
   text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
 }
 
-#login, #jogo {
+/* Estilo para a página de menu (index.html) */
+.menu-container {
+  background: #fff;
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  max-width: 400px;
+  width: 90%;
+  margin-top: 50px;
+}
+.menu-container a {
+  text-decoration: none;
+  color: white;
+  font-weight: bold;
+  padding: 15px 30px;
+  border-radius: 8px;
+  display: block;
+  margin: 15px 0;
+  transition: background-color 0.3s ease;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+.btn-aluno {
+  background-color: #007bff;
+}
+.btn-aluno:hover {
+  background-color: #0056b3;
+}
+.btn-professor {
+  background-color: #28a745;
+}
+.btn-professor:hover {
+  background-color: #218838;
+}
+
+/* Estilo para as páginas de jogo (aluno.html, professor.html) */
+#login, #jogo, #painelProfessor {
   background: #fff;
   padding: 30px;
   border-radius: 12px;
@@ -29,7 +65,7 @@ h1 {
   max-width: 600px;
 }
 
-input[type="text"], input[type="number"] {
+input[type="text"], input[type="number"], input[type="password"] {
   padding: 12px;
   border: 1px solid #ccc;
   border-radius: 8px;
@@ -56,7 +92,7 @@ button:hover {
   transform: translateY(-2px);
 }
 
-/* Estilo do tabuleiro */
+/* Estilo do Tabuleiro */
 #gameBoard {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
