@@ -23,11 +23,11 @@ let progresso = 0;
 let coins = 0;
 let respostaCorreta = 0;
 
-// Variáveis de tempo e questões (NOVO)
-const tempoPorPacote = 60; // Tempo em segundos para cada pacote
-let tempoRestante = 0;
+const tempoPorPacote = 60;
+let tempoRestante = tempoPorPacote;
 let perguntasRespondidas = 0;
 let timerInterval = null;
+let alunoDocRef; // Variável para a referência do documento do aluno
 
 // ===================== EVENTOS DE TECLA =====================
 document.getElementById("nomeAluno").addEventListener("keydown", function(event) {
@@ -50,7 +50,7 @@ document.getElementById("resposta").addEventListener("keydown", function(event) 
 
 // ===================== FUNÇÕES DO JOGO =====================
 
-// Função de login
+// Função de login (MODIFICADA)
 async function entrarJogo() {
   const nome = document.getElementById("nomeAluno").value.trim();
   turma = document.getElementById("nomeTurma").value.trim();
@@ -69,26 +69,29 @@ async function entrarJogo() {
   }
 
   aluno = nome;
+  alunoDocRef = doc(db, "alunos", aluno); // Define a referência do documento
+  
   document.getElementById("alunoNome").textContent = nome;
   document.getElementById("rankingTurma").textContent = turma;
   document.getElementById("login").classList.add("hidden");
   document.getElementById("jogo").classList.remove("hidden");
 
-  const ref = doc(db, "alunos", aluno);
-  const snap = await getDoc(ref);
+  const snap = await getDoc(alunoDocRef);
 
   if (snap.exists()) {
     const dadosAluno = snap.data();
     progresso = dadosAluno.progresso;
     coins = dadosAluno.coins;
+    // Pega o tempo do banco de dados ao entrar no jogo (NOVO)
+    tempoRestante = dadosAluno.tempoRestante || tempoPorPacote;
 
     if (coins <= 0) {
-      await updateDoc(ref, { coins: 10 });
+      await updateDoc(alunoDocRef, { coins: 10 });
       coins = 10;
       alert("Bem-vindo de volta! Suas moedas foram restauradas.");
     }
   } else {
-    await setDoc(ref, { progresso: 0, coins: 10, turma: turma });
+    await setDoc(alunoDocRef, { progresso: 0, coins: 10, turma: turma, tempoRestante: tempoPorPacote });
     progresso = 0;
     coins = 10;
     alert("Novo aluno cadastrado! Bom jogo!");
@@ -98,15 +101,16 @@ async function entrarJogo() {
   carregarRanking();
 }
 
-// Função para iniciar o jogo (MODIFICADA)
+// Função para iniciar o jogo
 function iniciarJogo() {
   document.getElementById("btnIniciar").classList.add("hidden");
   document.getElementById("btnParar").classList.remove("hidden");
   document.getElementById("questaoContainer").classList.remove("hidden");
   
-  // Reseta o tempo e o contador de questões
-  tempoRestante = tempoPorPacote;
   perguntasRespondidas = 0;
+  
+  // Reseta o tempo no banco de dados
+  updateDoc(alunoDocRef, { tempoRestante: tempoPorPacote });
 
   // Inicia o timer
   timerInterval = setInterval(atualizarTempo, 1000);
@@ -116,7 +120,7 @@ function iniciarJogo() {
 
 // Função para parar o jogo (MODIFICADA)
 function pararJogo() {
-  clearInterval(timerInterval); // Para o timer
+  clearInterval(timerInterval);
   document.getElementById("btnIniciar").classList.remove("hidden");
   document.getElementById("btnParar").classList.add("hidden");
   document.getElementById("questaoContainer").classList.add("hidden");
@@ -124,31 +128,34 @@ function pararJogo() {
   alert("Jogo pausado. Seu progresso foi salvo!");
 }
 
-// Atualiza o tempo na tela (NOVA FUNÇÃO)
+// Atualiza o tempo na tela e no banco de dados (MODIFICADA)
 function atualizarTempo() {
     tempoRestante--;
     document.getElementById("tempo").textContent = tempoRestante;
 
+    // Atualiza o tempo no Firestore a cada segundo (ATENÇÃO: pode gerar muitas escritas)
+    updateDoc(alunoDocRef, { tempoRestante: tempoRestante });
+
     if (tempoRestante <= 0) {
         clearInterval(timerInterval);
         alert("⏰ Tempo esgotado! Seu progresso foi salvo.");
-        pararJogo(); // Para o jogo automaticamente
+        pararJogo();
     }
 }
 
-// Gera nova questão de tabuada
+// Gera nova questão de tabuada (MODIFICADA)
 async function novaQuestao() {
   if (coins <= 0) {
     alert("⚠️ Você ficou sem moedas! Peça ao professor para liberar.");
     document.getElementById("resposta").disabled = true;
     document.getElementById("btnParar").disabled = true;
+    clearInterval(timerInterval); // Para o timer
     return;
   }
   
-  // Verifica se o pacote de 10 questões foi completado (NOVO)
   if (perguntasRespondidas >= 10) {
       alert("✅ Pacote de 10 questões completo! O tempo foi resetado e um novo pacote começou.");
-      iniciarJogo(); // Inicia um novo pacote
+      iniciarJogo();
       return;
   }
 
@@ -171,7 +178,7 @@ async function verificarResposta() {
   if (resposta === respostaCorreta) {
     progresso++;
     coins += 5;
-    perguntasRespondidas++; // Incrementa a contagem
+    perguntasRespondidas++;
     alert(`✅ Correto! Você ganhou 5 coins. Questão ${perguntasRespondidas}/10.`);
   } else {
     coins -= 3;
@@ -183,10 +190,10 @@ async function verificarResposta() {
     alert("⚠️ Você ficou sem coins! Peça ao professor para liberar.");
     document.getElementById("resposta").disabled = true;
     document.getElementById("btnParar").disabled = true;
+    clearInterval(timerInterval); // Para o timer
   }
 
-  const ref = doc(db, "alunos", aluno);
-  await updateDoc(ref, { progresso, coins });
+  await updateDoc(alunoDocRef, { progresso, coins });
 
   atualizarTela();
   document.getElementById("resposta").value = "";
@@ -211,7 +218,7 @@ function carregarRanking() {
     snapshot.forEach(doc => {
       const data = doc.data();
       const li = document.createElement("li");
-      li.textContent = `${doc.id} - Progresso: ${data.progresso} | Coins: ${data.coins}`;
+      li.textContent = `${doc.id} - Progresso: ${data.progresso} | Coins: ${data.coins} | Tempo: ${data.tempoRestante || 'N/A'}`;
       lista.appendChild(li);
     });
   });
