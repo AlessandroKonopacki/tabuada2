@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Jogo da Tabuada - Aluno</title>
   <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
   <h1>🎲 Jogo da Tabuada</h1>
 
@@ -23,12 +25,14 @@
       <p><strong>Moedas:</strong> <span id="coins"></span></p>
     </div>
 
-    <div id="gameBoard"></div>
+
 
     <div class="controle-jogo">
       <button onclick="novaQuestao()">Responder Questão</button>
-      <div id="questao" class="hidden">
-        <p id="pergunta"></p>
+      <div id="gameBoard">
+        <div id="questao" class="hidden">
+          <p id="pergunta"></p>
+        </div>
         <input type="number" id="resposta" placeholder="Sua resposta">
         <button onclick="verificarResposta()">Enviar</button>
       </div>
@@ -40,4 +44,5 @@
 
   <script type="module" src="main.js"></script>
 </body>
+
 </html>
