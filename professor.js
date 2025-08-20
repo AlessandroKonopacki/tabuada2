@@ -43,19 +43,17 @@ function carregarAlunos() {
 async function liberarCoins(nome) {
   const ref = doc(db, "alunos", nome);
   await updateDoc(ref, { coins: 10 });
-  alert(`✅ Aluno ${nome} recebeu 10 coins!`);
 }
 
 // Função para resetar aluno
 async function resetarAluno(nome) {
   const ref = doc(db, "alunos", nome);
-  await updateDoc(ref, { coins: 5, progresso: 0 });
-  alert(`♻️ Aluno ${nome} foi resetado!`);
+  await updateDoc(ref, { progresso: 0, coins: 10 });
 }
 
-// Inicializa
-carregarAlunos();
-
-// Expor funções para HTML
+// Expõe funções ao HTML
 window.liberarCoins = liberarCoins;
 window.resetarAluno = resetarAluno;
+
+// AQUI ESTÁ A CORREÇÃO: Chame a função quando a página carregar
+carregarAlunos();
