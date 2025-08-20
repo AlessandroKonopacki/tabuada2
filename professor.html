@@ -3,20 +3,33 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Painel do Professor - Jogo da Glória</title>
+  <title>Painel do Professor - Jogo da Tabuada</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <h1>👨‍🏫 Painel do Professor</h1>
 
-  <div id="login" style="margin-top: 20px;">
-    <input type="password" id="senhaProf" placeholder="Digite a senha">
-    <button onclick="login()">Entrar</button>
+  <div id="login-professor">
+    <h2>Login do Professor</h2>
+    <input type="text" id="nomeProfLogin" placeholder="Nome do Professor">
+    <input type="password" id="senhaProfLogin" placeholder="Senha">
+    <button onclick="loginProfessor()">Entrar</button>
   </div>
 
   <div id="painelProfessor" class="hidden">
-    <h2>📋 Lista de Alunos</h2>
-    <ul id="listaAlunos"></ul>
+    <h2 id="bemVindo"></h2>
+
+    <div id="gerenciarTurmas">
+      <h3>Minhas Turmas</h3>
+      <ul id="listaTurmas"></ul>
+      <input type="text" id="nomeNovaTurma" placeholder="Nome da nova turma">
+      <button onclick="criarTurma()">Criar Turma</button>
+    </div>
+
+    <div id="gerenciarAlunos" class="hidden">
+      <h3>Alunos da Turma: <span id="turmaAtual"></span></h3>
+      <ul id="listaAlunos"></ul>
+    </div>
   </div>
 
   <script type="module" src="professor.js"></script>

@@ -1,6 +1,6 @@
 // Importa Firebase da CDN
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, doc, updateDoc, collection, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, doc, updateDoc, collection, onSnapshot, deleteDoc, setDoc, getDoc, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // Configuração Firebase
 const firebaseConfig = {
@@ -13,32 +13,93 @@ const firebaseConfig = {
   measurementId: "G-GJJSQS3736"
 };
 
-// Inicializa Firebase
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// Senha do professor (Você pode mudar esta senha!)
-const SENHA_PROFESSOR = "atomo123'";
+let professorLogado = null;
+let turmaAtual = null;
 
-// Função para fazer login
-function login() {
-  const senhaDigitada = document.getElementById("senhaProf").value;
-  if (senhaDigitada === SENHA_PROFESSOR) {
-    document.getElementById("login").classList.add("hidden");
+// =================== Lógica de Login ===================
+
+async function loginProfessor() {
+  const nomeProf = document.getElementById("nomeProfLogin").value.trim();
+  const senhaProf = document.getElementById("senhaProfLogin").value.trim();
+
+  if (!nomeProf || !senhaProf) {
+    alert("Por favor, preencha todos os campos.");
+    return;
+  }
+
+  const profRef = doc(db, "professores", nomeProf);
+  const profSnap = await getDoc(profRef);
+
+  if (profSnap.exists() && profSnap.data().senha === senhaProf) {
+    professorLogado = nomeProf;
+    document.getElementById("login-professor").classList.add("hidden");
     document.getElementById("painelProfessor").classList.remove("hidden");
-    carregarAlunos(); // Só carrega a lista após o login
+    document.getElementById("bemVindo").textContent = `Bem-vindo(a), ${professorLogado}!`;
+    carregarTurmas();
   } else {
-    alert("Senha incorreta!");
+    alert("Nome de professor ou senha incorretos.");
   }
 }
 
-// Carregar lista em tempo real
-function carregarAlunos() {
+// =================== Lógica de Turmas ===================
+
+async function criarTurma() {
+  const nomeTurma = document.getElementById("nomeNovaTurma").value.trim();
+
+  if (!nomeTurma) {
+    alert("Digite o nome da turma!");
+    return;
+  }
+
+  const turmaRef = doc(db, "turmas", nomeTurma);
+  const turmaSnap = await getDoc(turmaRef);
+
+  if (turmaSnap.exists()) {
+    alert("Essa turma já existe!");
+  } else {
+    await setDoc(turmaRef, { professor: professorLogado });
+    alert(`Turma "${nomeTurma}" criada com sucesso!`);
+    document.getElementById("nomeNovaTurma").value = "";
+  }
+}
+
+function carregarTurmas() {
+  const turmasRef = collection(db, "turmas");
+  const q = query(turmasRef, where("professor", "==", professorLogado));
+
+  onSnapshot(q, (snapshot) => {
+    const lista = document.getElementById("listaTurmas");
+    lista.innerHTML = "";
+    snapshot.forEach(docSnap => {
+      const li = document.createElement("li");
+      li.innerHTML = `
+        <strong>${docSnap.id}</strong>
+        <button onclick="selecionarTurma('${docSnap.id}')">Ver Alunos</button>
+      `;
+      lista.appendChild(li);
+    });
+  });
+}
+
+function selecionarTurma(nomeTurma) {
+  turmaAtual = nomeTurma;
+  document.getElementById("turmaAtual").textContent = turmaAtual;
+  document.getElementById("gerenciarAlunos").classList.remove("hidden");
+  carregarAlunosPorTurma();
+}
+
+// =================== Lógica de Alunos ===================
+
+function carregarAlunosPorTurma() {
   const alunosRef = collection(db, "alunos");
-  onSnapshot(alunosRef, (snapshot) => {
+  const q = query(alunosRef, where("turma", "==", turmaAtual));
+
+  onSnapshot(q, (snapshot) => {
     const lista = document.getElementById("listaAlunos");
     lista.innerHTML = "";
-
     snapshot.forEach(docSnap => {
       const data = docSnap.data();
       const li = document.createElement("li");
@@ -49,25 +110,21 @@ function carregarAlunos() {
         <button onclick="resetarAluno('${docSnap.id}')">♻️ Resetar</button>
         <button onclick="excluirAluno('${docSnap.id}')" class="btn-excluir">🗑️ Excluir</button>
       `;
-
       lista.appendChild(li);
     });
   });
 }
 
-// Função para liberar coins
 async function liberarCoins(nome) {
   const ref = doc(db, "alunos", nome);
   await updateDoc(ref, { coins: 10 });
 }
 
-// Função para resetar aluno
 async function resetarAluno(nome) {
   const ref = doc(db, "alunos", nome);
   await updateDoc(ref, { progresso: 0, coins: 10 });
 }
 
-// Função para EXCLUIR aluno (NOVA FUNÇÃO)
 async function excluirAluno(nome) {
   if (confirm(`Tem certeza que deseja excluir o aluno ${nome}?`)) {
     const ref = doc(db, "alunos", nome);
@@ -76,8 +133,10 @@ async function excluirAluno(nome) {
   }
 }
 
-// Expõe funções ao HTML para que os botões funcionem
-window.login = login;
+// Expõe funções ao HTML
+window.loginProfessor = loginProfessor;
+window.criarTurma = criarTurma;
+window.selecionarTurma = selecionarTurma;
 window.liberarCoins = liberarCoins;
 window.resetarAluno = resetarAluno;
 window.excluirAluno = excluirAluno;
