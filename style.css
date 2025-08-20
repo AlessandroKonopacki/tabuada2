@@ -1,38 +1,129 @@
 body {
-  font-family: Arial, sans-serif;
+  font-family: 'Arial', sans-serif;
   text-align: center;
-  background: #f8f8f8;
+  background: linear-gradient(135deg, #f0f4f7, #d9e2e9);
   padding: 20px;
+  color: #333;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .hidden {
   display: none;
 }
 
+h1 {
+  color: #007bff;
+  font-size: 2.5em;
+  text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+}
+
+#login, #jogo {
+  background: #fff;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+  margin-top: 20px;
+  width: 90%;
+  max-width: 600px;
+}
+
+input[type="text"], input[type="number"] {
+  padding: 12px;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  width: 80%;
+  margin-bottom: 15px;
+  font-size: 1em;
+}
+
 button {
   margin: 5px;
-  padding: 10px 15px;
+  padding: 12px 25px;
   border: none;
-  border-radius: 6px;
+  border-radius: 8px;
   background-color: #007bff;
   color: white;
+  font-weight: bold;
   cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.1s ease;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 
 button:hover {
   background-color: #0056b3;
+  transform: translateY(-2px);
 }
 
+/* Estilo do tabuleiro */
+#gameBoard {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  grid-template-rows: repeat(4, 1fr);
+  gap: 10px;
+  width: 100%;
+  max-width: 500px;
+  margin: 20px auto;
+  padding: 10px;
+  background: #a9d2ff;
+  border-radius: 15px;
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
+}
+
+.cell {
+  background: #fff;
+  border: 2px solid #007bff;
+  border-radius: 10px;
+  height: 60px;
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  font-size: 1.2em;
+  position: relative;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  transition: transform 0.3s ease;
+}
+
+.cell:hover {
+  transform: scale(1.05);
+}
+
+.player {
+  width: 40px;
+  height: 40px;
+  background-color: #ff4500;
+  border-radius: 50%;
+  border: 3px solid #fff;
+  box-shadow: 0 0 10px rgba(0,0,0,0.5);
+  position: absolute;
+  animation: jump 0.5s ease-in-out;
+}
+
+/* Animação do pulo do peão */
+@keyframes jump {
+  0% { transform: translateY(0); }
+  50% { transform: translateY(-15px) scale(1.1); }
+  100% { transform: translateY(0); }
+}
+
+/* Estilo do Ranking */
 #ranking {
   list-style: none;
   padding: 0;
+  margin-top: 20px;
+  width: 100%;
 }
 
 #ranking li {
-  background: #fff;
-  margin: 5px auto;
-  padding: 10px;
-  width: 250px;
-  border-radius: 8px;
-  box-shadow: 0 0 5px rgba(0,0,0,0.2);
+  background: #f0f4f7;
+  margin: 8px auto;
+  padding: 12px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
