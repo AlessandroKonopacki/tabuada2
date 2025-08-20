@@ -1,6 +1,6 @@
 // Importa Firebase da CDN
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, doc, updateDoc, collection, onSnapshot, deleteDoc, setDoc, getDoc, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, doc, updateDoc, collection, onSnapshot, deleteDoc, setDoc, getDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // Configuração Firebase
 const firebaseConfig = {
@@ -78,10 +78,30 @@ function carregarTurmas() {
       li.innerHTML = `
         <strong>${docSnap.id}</strong>
         <button onclick="selecionarTurma('${docSnap.id}')">Ver Alunos</button>
+        <button onclick="excluirTurma('${docSnap.id}')" class="btn-excluir">🗑️ Excluir Turma</button>
       `;
       lista.appendChild(li);
     });
   });
+}
+
+// Função para EXCLUIR uma turma (NOVA FUNÇÃO)
+async function excluirTurma(nomeTurma) {
+  if (confirm(`Tem certeza que deseja excluir a turma "${nomeTurma}" e todos os seus alunos? Esta ação é irreversível.`)) {
+    // 1. Deleta todos os alunos da turma
+    const alunosRef = collection(db, "alunos");
+    const q = query(alunosRef, where("turma", "==", nomeTurma));
+    const alunosParaExcluir = await getDocs(q);
+
+    const promisesDeExclusao = alunosParaExcluir.docs.map(alunoDoc => deleteDoc(doc(db, "alunos", alunoDoc.id)));
+    await Promise.all(promisesDeExclusao);
+
+    // 2. Deleta a turma
+    const turmaRef = doc(db, "turmas", nomeTurma);
+    await deleteDoc(turmaRef);
+
+    alert(`Turma "${nomeTurma}" e todos os seus alunos foram excluídos com sucesso!`);
+  }
 }
 
 function selecionarTurma(nomeTurma) {
@@ -137,6 +157,7 @@ async function excluirAluno(nome) {
 window.loginProfessor = loginProfessor;
 window.criarTurma = criarTurma;
 window.selecionarTurma = selecionarTurma;
+window.excluirTurma = excluirTurma;
 window.liberarCoins = liberarCoins;
 window.resetarAluno = resetarAluno;
 window.excluirAluno = excluirAluno;
