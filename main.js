@@ -23,6 +23,27 @@ let progresso = 0;
 let coins = 0;
 let respostaCorreta = 0;
 
+// ===================== EVENTOS DE TECLA (NOVO) =====================
+// Permite entrar no jogo com a tecla Enter
+document.getElementById("nomeAluno").addEventListener("keydown", function(event) {
+    if (event.key === "Enter") {
+        entrarJogo();
+    }
+});
+
+document.getElementById("nomeTurma").addEventListener("keydown", function(event) {
+    if (event.key === "Enter") {
+        entrarJogo();
+    }
+});
+
+// Permite enviar a resposta com a tecla Enter
+document.getElementById("resposta").addEventListener("keydown", function(event) {
+    if (event.key === "Enter") {
+        verificarResposta();
+    }
+});
+
 // ===================== FUNÇÕES DO JOGO =====================
 
 // Função de login

@@ -9,7 +9,7 @@ const firebaseConfig = {
   projectId: "jogo-da-tabuada-cf924",
   storageBucket: "jogo-da-tabuada-cf924.appspot.com",
   messagingSenderId: "884835175381",
-  appId: "1:884835175381:web:9ca1ae363087cb27624b5c",
+  appId: "1:884835175381:web:9ca1ae363087cb24b5c",
   measurementId: "G-GJJSQS3736"
 };
 
@@ -18,6 +18,27 @@ const db = getFirestore(app);
 
 let professorLogado = null;
 let turmaAtual = null;
+
+// ===================== EVENTOS DE TECLA (NOVO) =====================
+// Permite fazer login com a tecla Enter
+document.getElementById("senhaProfLogin").addEventListener("keydown", function(event) {
+    if (event.key === "Enter") {
+        loginProfessor();
+    }
+});
+
+document.getElementById("nomeProfLogin").addEventListener("keydown", function(event) {
+    if (event.key === "Enter") {
+        loginProfessor();
+    }
+});
+
+// Permite criar turma com a tecla Enter
+document.getElementById("nomeNovaTurma").addEventListener("keydown", function(event) {
+    if (event.key === "Enter") {
+        criarTurma();
+    }
+});
 
 // =================== Lógica de Login ===================
 
@@ -85,10 +106,8 @@ function carregarTurmas() {
   });
 }
 
-// Função para EXCLUIR uma turma (NOVA FUNÇÃO)
 async function excluirTurma(nomeTurma) {
   if (confirm(`Tem certeza que deseja excluir a turma "${nomeTurma}" e todos os seus alunos? Esta ação é irreversível.`)) {
-    // 1. Deleta todos os alunos da turma
     const alunosRef = collection(db, "alunos");
     const q = query(alunosRef, where("turma", "==", nomeTurma));
     const alunosParaExcluir = await getDocs(q);
@@ -96,7 +115,6 @@ async function excluirTurma(nomeTurma) {
     const promisesDeExclusao = alunosParaExcluir.docs.map(alunoDoc => deleteDoc(doc(db, "alunos", alunoDoc.id)));
     await Promise.all(promisesDeExclusao);
 
-    // 2. Deleta a turma
     const turmaRef = doc(db, "turmas", nomeTurma);
     await deleteDoc(turmaRef);
 
