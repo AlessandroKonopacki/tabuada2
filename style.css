@@ -157,3 +157,8 @@ button:hover {
 .btn-excluir:hover {
   background-color: #c82333;
 }
+
+#tempo {
+  font-weight: bold;
+  color: #d9534f; /* Cor vermelha para o tempo */
+}

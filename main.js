@@ -23,6 +23,12 @@ let progresso = 0;
 let coins = 0;
 let respostaCorreta = 0;
 
+// Variáveis de tempo e questões (NOVO)
+const tempoPorPacote = 60; // Tempo em segundos para cada pacote
+let tempoRestante = 0;
+let perguntasRespondidas = 0;
+let timerInterval = null;
+
 // ===================== EVENTOS DE TECLA =====================
 document.getElementById("nomeAluno").addEventListener("keydown", function(event) {
     if (event.key === "Enter") {
@@ -92,16 +98,25 @@ async function entrarJogo() {
   carregarRanking();
 }
 
-// Função para iniciar o jogo (NOVO)
+// Função para iniciar o jogo (MODIFICADA)
 function iniciarJogo() {
   document.getElementById("btnIniciar").classList.add("hidden");
   document.getElementById("btnParar").classList.remove("hidden");
   document.getElementById("questaoContainer").classList.remove("hidden");
+  
+  // Reseta o tempo e o contador de questões
+  tempoRestante = tempoPorPacote;
+  perguntasRespondidas = 0;
+
+  // Inicia o timer
+  timerInterval = setInterval(atualizarTempo, 1000);
+  
   novaQuestao();
 }
 
-// Função para parar o jogo (NOVO)
+// Função para parar o jogo (MODIFICADA)
 function pararJogo() {
+  clearInterval(timerInterval); // Para o timer
   document.getElementById("btnIniciar").classList.remove("hidden");
   document.getElementById("btnParar").classList.add("hidden");
   document.getElementById("questaoContainer").classList.add("hidden");
@@ -109,14 +124,32 @@ function pararJogo() {
   alert("Jogo pausado. Seu progresso foi salvo!");
 }
 
+// Atualiza o tempo na tela (NOVA FUNÇÃO)
+function atualizarTempo() {
+    tempoRestante--;
+    document.getElementById("tempo").textContent = tempoRestante;
+
+    if (tempoRestante <= 0) {
+        clearInterval(timerInterval);
+        alert("⏰ Tempo esgotado! Seu progresso foi salvo.");
+        pararJogo(); // Para o jogo automaticamente
+    }
+}
+
 // Gera nova questão de tabuada
 async function novaQuestao() {
   if (coins <= 0) {
     alert("⚠️ Você ficou sem moedas! Peça ao professor para liberar.");
-    // Desabilitar a questão para evitar que o aluno continue tentando
     document.getElementById("resposta").disabled = true;
     document.getElementById("btnParar").disabled = true;
     return;
+  }
+  
+  // Verifica se o pacote de 10 questões foi completado (NOVO)
+  if (perguntasRespondidas >= 10) {
+      alert("✅ Pacote de 10 questões completo! O tempo foi resetado e um novo pacote começou.");
+      iniciarJogo(); // Inicia um novo pacote
+      return;
   }
 
   const a = Math.floor(Math.random() * 9) + 1;
@@ -127,7 +160,7 @@ async function novaQuestao() {
   document.getElementById("resposta").focus();
 }
 
-// Verifica resposta
+// Verifica resposta (MODIFICADA)
 async function verificarResposta() {
   const resposta = parseInt(document.getElementById("resposta").value);
   if (isNaN(resposta)) {
@@ -138,7 +171,8 @@ async function verificarResposta() {
   if (resposta === respostaCorreta) {
     progresso++;
     coins += 5;
-    alert("✅ Correto! Você ganhou 5 coins.");
+    perguntasRespondidas++; // Incrementa a contagem
+    alert(`✅ Correto! Você ganhou 5 coins. Questão ${perguntasRespondidas}/10.`);
   } else {
     coins -= 3;
     alert(`❌ Errado! Perdeu 3 coins. Resposta correta: ${respostaCorreta}`);
@@ -147,7 +181,6 @@ async function verificarResposta() {
   if (coins <= 0) {
     coins = 0;
     alert("⚠️ Você ficou sem coins! Peça ao professor para liberar.");
-    // Desabilitar a questão para evitar que o aluno continue tentando
     document.getElementById("resposta").disabled = true;
     document.getElementById("btnParar").disabled = true;
   }
@@ -164,6 +197,7 @@ async function verificarResposta() {
 function atualizarTela() {
   document.getElementById("progresso").textContent = progresso;
   document.getElementById("coins").textContent = coins;
+  document.getElementById("tempo").textContent = tempoRestante;
 }
 
 // Ranking da turma em tempo real

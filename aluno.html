@@ -21,6 +21,7 @@
       <p><strong>Aluno:</strong> <span id="alunoNome"></span></p>
       <p><strong>Progresso:</strong> <span id="progresso"></span></p>
       <p><strong>Moedas:</strong> <span id="coins"></span></p>
+      <p><strong>Tempo:</strong> <span id="tempo"></span></p>
     </div>
 
     <div class="controle-jogo">
@@ -30,10 +31,9 @@
 
     <div id="questaoContainer" class="questao-container hidden">
       <p id="pergunta"></p>
+      <input type="number" id="resposta" placeholder="Sua resposta">
+      <button onclick="verificarResposta()">Enviar</button>
     </div>
-
-    <input type="number" id="resposta" placeholder="Sua resposta">
-    <button onclick="verificarResposta()">Enviar</button>
     
     <h2>📊 Ranking da Turma: <span id="rankingTurma"></span></h2>
     <ul id="ranking"></ul>
