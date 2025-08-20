@@ -23,8 +23,7 @@ let progresso = 0;
 let coins = 0;
 let respostaCorreta = 0;
 
-// ===================== EVENTOS DE TECLA (NOVO) =====================
-// Permite entrar no jogo com a tecla Enter
+// ===================== EVENTOS DE TECLA =====================
 document.getElementById("nomeAluno").addEventListener("keydown", function(event) {
     if (event.key === "Enter") {
         entrarJogo();
@@ -37,7 +36,6 @@ document.getElementById("nomeTurma").addEventListener("keydown", function(event)
     }
 });
 
-// Permite enviar a resposta com a tecla Enter
 document.getElementById("resposta").addEventListener("keydown", function(event) {
     if (event.key === "Enter") {
         verificarResposta();
@@ -56,7 +54,6 @@ async function entrarJogo() {
     return;
   }
 
-  // Verifica se a turma existe no banco de dados
   const turmaRef = doc(db, "turmas", turma);
   const turmaSnap = await getDoc(turmaRef);
   
@@ -85,7 +82,6 @@ async function entrarJogo() {
       alert("Bem-vindo de volta! Suas moedas foram restauradas.");
     }
   } else {
-    // Agora salvamos a turma junto com o aluno
     await setDoc(ref, { progresso: 0, coins: 10, turma: turma });
     progresso = 0;
     coins = 10;
@@ -94,13 +90,32 @@ async function entrarJogo() {
 
   atualizarTela();
   carregarRanking();
+}
+
+// Função para iniciar o jogo (NOVO)
+function iniciarJogo() {
+  document.getElementById("btnIniciar").classList.add("hidden");
+  document.getElementById("btnParar").classList.remove("hidden");
+  document.getElementById("questaoContainer").classList.remove("hidden");
   novaQuestao();
+}
+
+// Função para parar o jogo (NOVO)
+function pararJogo() {
+  document.getElementById("btnIniciar").classList.remove("hidden");
+  document.getElementById("btnParar").classList.add("hidden");
+  document.getElementById("questaoContainer").classList.add("hidden");
+  document.getElementById("resposta").value = "";
+  alert("Jogo pausado. Seu progresso foi salvo!");
 }
 
 // Gera nova questão de tabuada
 async function novaQuestao() {
   if (coins <= 0) {
     alert("⚠️ Você ficou sem moedas! Peça ao professor para liberar.");
+    // Desabilitar a questão para evitar que o aluno continue tentando
+    document.getElementById("resposta").disabled = true;
+    document.getElementById("btnParar").disabled = true;
     return;
   }
 
@@ -108,7 +123,6 @@ async function novaQuestao() {
   const b = Math.floor(Math.random() * 9) + 1;
   respostaCorreta = a * b;
 
-  document.getElementById("questao").classList.remove("hidden");
   document.getElementById("pergunta").textContent = `Quanto é ${a} x ${b}?`;
   document.getElementById("resposta").focus();
 }
@@ -133,14 +147,17 @@ async function verificarResposta() {
   if (coins <= 0) {
     coins = 0;
     alert("⚠️ Você ficou sem coins! Peça ao professor para liberar.");
+    // Desabilitar a questão para evitar que o aluno continue tentando
+    document.getElementById("resposta").disabled = true;
+    document.getElementById("btnParar").disabled = true;
   }
 
   const ref = doc(db, "alunos", aluno);
   await updateDoc(ref, { progresso, coins });
 
   atualizarTela();
-  document.getElementById("questao").classList.add("hidden");
   document.getElementById("resposta").value = "";
+  novaQuestao();
 }
 
 // Atualiza tela com dados
@@ -152,7 +169,6 @@ function atualizarTela() {
 // Ranking da turma em tempo real
 function carregarRanking() {
   const alunosRef = collection(db, "alunos");
-  // Agora filtramos por turma
   const q = query(alunosRef, where("turma", "==", turma));
 
   onSnapshot(q, (snapshot) => {
@@ -169,5 +185,7 @@ function carregarRanking() {
 
 // Expõe funções ao HTML
 window.entrarJogo = entrarJogo;
+window.iniciarJogo = iniciarJogo;
+window.pararJogo = pararJogo;
 window.novaQuestao = novaQuestao;
 window.verificarResposta = verificarResposta;

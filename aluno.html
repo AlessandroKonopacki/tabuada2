@@ -23,12 +23,18 @@
       <p><strong>Moedas:</strong> <span id="coins"></span></p>
     </div>
 
-    <div id="questaoContainer" class="questao-container">
-      <p id="pergunta"></p>
+    <div class="controle-jogo">
+      <button id="btnIniciar" onclick="iniciarJogo()">Iniciar Jogo</button>
+      <button id="btnParar" onclick="pararJogo()" class="hidden">Parar e Salvar</button>
     </div>
-    
-    <input type="number" id="resposta" placeholder="Sua resposta">
-    <button onclick="verificarResposta()">Enviar</button>
+
+    <div id="gameBoard"></div>
+
+    <div id="questaoContainer" class="questao-container hidden">
+      <p id="pergunta"></p>
+      <input type="number" id="resposta" placeholder="Sua resposta">
+      <button onclick="verificarResposta()">Enviar</button>
+    </div>
     
     <h2>📊 Ranking da Turma: <span id="rankingTurma"></span></h2>
     <ul id="ranking"></ul>
