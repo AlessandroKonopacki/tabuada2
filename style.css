@@ -163,3 +163,12 @@ button:hover {
   justify-content: space-between;
   align-items: center;
 }
+
+.btn-excluir {
+  background-color: #dc3545;
+  margin-left: 10px;
+}
+
+.btn-excluir:hover {
+  background-color: #c82333;
+}

@@ -1,6 +1,6 @@
 // Importa Firebase da CDN
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, doc, updateDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, doc, updateDoc, collection, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // Configuração Firebase
 const firebaseConfig = {
@@ -18,7 +18,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 // Senha do professor (Você pode mudar esta senha!)
-const SENHA_PROFESSOR = "atomo123'";
+const SENHA_PROFESSOR = "123456";
 
 // Função para fazer login
 function login() {
@@ -47,6 +47,7 @@ function carregarAlunos() {
         <strong>${docSnap.id}</strong> - Progresso: ${data.progresso} | Coins: ${data.coins}
         <button onclick="liberarCoins('${docSnap.id}')">🔓 Liberar (10 coins)</button>
         <button onclick="resetarAluno('${docSnap.id}')">♻️ Resetar</button>
+        <button onclick="excluirAluno('${docSnap.id}')" class="btn-excluir">🗑️ Excluir</button>
       `;
 
       lista.appendChild(li);
@@ -66,7 +67,17 @@ async function resetarAluno(nome) {
   await updateDoc(ref, { progresso: 0, coins: 10 });
 }
 
+// Função para EXCLUIR aluno (NOVA FUNÇÃO)
+async function excluirAluno(nome) {
+  if (confirm(`Tem certeza que deseja excluir o aluno ${nome}?`)) {
+    const ref = doc(db, "alunos", nome);
+    await deleteDoc(ref);
+    alert(`Aluno ${nome} excluído com sucesso!`);
+  }
+}
+
 // Expõe funções ao HTML para que os botões funcionem
 window.login = login;
 window.liberarCoins = liberarCoins;
 window.resetarAluno = resetarAluno;
+window.excluirAluno = excluirAluno;
