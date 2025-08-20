@@ -14,25 +14,29 @@ async function entrarJogo() {
   const ref = doc(db, "alunos", aluno);
   const snap = await getDoc(ref);
 
+  // Verifica se o aluno já existe no banco de dados
   if (snap.exists()) {
-    // Se o aluno já existe, carrega os dados dele.
-    progresso = snap.data().progresso;
-    coins = snap.data().coins;
+    // Se existir, carrega os dados dele
+    const dadosAluno = snap.data();
+    progresso = dadosAluno.progresso;
+    coins = dadosAluno.coins;
+
+    // Se o aluno retornar com moedas zeradas, restaura para 10
+    if (coins <= 0) {
+      await updateDoc(ref, { coins: 10 });
+      coins = 10;
+      alert("Bem-vindo de volta! Suas moedas foram restauradas.");
+    }
   } else {
-    // Se for um novo aluno, cria um novo registro com 10 moedas iniciais.
+    // Se for um novo aluno, cria um novo registro com 10 moedas iniciais
     await setDoc(ref, { progresso: 0, coins: 10 });
     progresso = 0;
     coins = 10;
+    alert("Novo aluno cadastrado! Bom jogo!");
   }
 
-  // Se o aluno tiver 0 moedas, garante que ele comece com 10.
-  // Isso resolve o problema de alunos que retornam com saldo zerado.
-  if (coins <= 0) {
-    await updateDoc(ref, { coins: 10 });
-    coins = 10;
-    alert("Bem-vindo de volta! Moedas restauradas.");
-  }
-
+  // Atualiza o painel do aluno e o ranking para todos
   atualizarTela();
   carregarRanking();
+  novaQuestao(); // Já exibe a primeira questão
 }
