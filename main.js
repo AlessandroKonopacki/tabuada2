@@ -22,6 +22,23 @@ let progresso = 0;
 let coins = 0;
 let respostaCorreta = 0;
 
+// ===================== EVENTOS DE TECLA (NOVO) =====================
+// Permite entrar no jogo com a tecla Enter
+document.getElementById("nomeAluno").addEventListener("keydown", function(event) {
+    if (event.key === "Enter") {
+        entrarJogo();
+    }
+});
+
+// Permite enviar a resposta com a tecla Enter
+document.getElementById("resposta").addEventListener("keydown", function(event) {
+    if (event.key === "Enter") {
+        verificarResposta();
+    }
+});
+
+// ===================== FUNÇÕES DO JOGO =====================
+
 // Função de login
 async function entrarJogo() {
   const nome = document.getElementById("nomeAluno").value.trim();
@@ -35,27 +52,33 @@ async function entrarJogo() {
   document.getElementById("login").classList.add("hidden");
   document.getElementById("jogo").classList.remove("hidden");
 
-  // Carregar progresso do Firestore
   const ref = doc(db, "alunos", aluno);
   const snap = await getDoc(ref);
 
   if (snap.exists()) {
-    progresso = snap.data().progresso;
-    coins = snap.data().coins;
+    const dadosAluno = snap.data();
+    progresso = dadosAluno.progresso;
+    coins = dadosAluno.coins;
+
+    if (coins <= 0) {
+      await updateDoc(ref, { coins: 10 });
+      coins = 10;
+      alert("Bem-vindo de volta! Suas moedas foram restauradas.");
+    }
   } else {
-    // Definir coins iniciais para o primeiro jogo
     await setDoc(ref, { progresso: 0, coins: 10 });
     progresso = 0;
     coins = 10;
+    alert("Novo aluno cadastrado! Bom jogo!");
   }
 
   atualizarTela();
   carregarRanking();
+  novaQuestao();
 }
 
 // Gera nova questão de tabuada
 async function novaQuestao() {
-  // AQUI: Adicionamos a verificação para travar o jogo.
   if (coins <= 0) {
     alert("⚠️ Você ficou sem moedas! Peça ao professor para liberar.");
     return;
@@ -67,12 +90,17 @@ async function novaQuestao() {
 
   document.getElementById("questao").classList.remove("hidden");
   document.getElementById("pergunta").textContent = `Quanto é ${a} x ${b}?`;
+  document.getElementById("resposta").focus(); // Coloca o foco no campo de resposta
 }
 
 // Verifica resposta
 async function verificarResposta() {
   const resposta = parseInt(document.getElementById("resposta").value);
-
+  if (isNaN(resposta)) {
+      alert("Por favor, digite um número.");
+      return;
+  }
+  
   if (resposta === respostaCorreta) {
     progresso++;
     coins += 5;
@@ -82,13 +110,11 @@ async function verificarResposta() {
     alert(`❌ Errado! Perdeu 3 coins. Resposta correta: ${respostaCorreta}`);
   }
 
-  // Se coins zerar, trava o aluno até o professor liberar
   if (coins <= 0) {
     coins = 0;
     alert("⚠️ Você ficou sem coins! Peça ao professor para liberar.");
   }
 
-  // Atualizar no Firestore
   const ref = doc(db, "alunos", aluno);
   await updateDoc(ref, { progresso, coins });
 
