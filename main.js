@@ -43,9 +43,10 @@ async function entrarJogo() {
     progresso = snap.data().progresso;
     coins = snap.data().coins;
   } else {
-    await setDoc(ref, { progresso: 0, coins: 0 });
+    // Definir coins iniciais para o primeiro jogo
+    await setDoc(ref, { progresso: 0, coins: 10 });
     progresso = 0;
-    coins = 0;
+    coins = 10;
   }
 
   atualizarTela();
@@ -53,7 +54,13 @@ async function entrarJogo() {
 }
 
 // Gera nova questão de tabuada
-function novaQuestao() {
+async function novaQuestao() {
+  // AQUI: Adicionamos a verificação para travar o jogo.
+  if (coins <= 0) {
+    alert("⚠️ Você ficou sem moedas! Peça ao professor para liberar.");
+    return;
+  }
+
   const a = Math.floor(Math.random() * 9) + 1;
   const b = Math.floor(Math.random() * 9) + 1;
   respostaCorreta = a * b;
