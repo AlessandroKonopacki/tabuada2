@@ -1,6 +1,6 @@
 // Importa Firebase direto da CDN
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // Configuração do Firebase
 const firebaseConfig = {
@@ -18,37 +18,35 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 let aluno = null;
+let turma = null;
 let progresso = 0;
 let coins = 0;
 let respostaCorreta = 0;
-
-// ===================== EVENTOS DE TECLA (NOVO) =====================
-// Permite entrar no jogo com a tecla Enter
-document.getElementById("nomeAluno").addEventListener("keydown", function(event) {
-    if (event.key === "Enter") {
-        entrarJogo();
-    }
-});
-
-// Permite enviar a resposta com a tecla Enter
-document.getElementById("resposta").addEventListener("keydown", function(event) {
-    if (event.key === "Enter") {
-        verificarResposta();
-    }
-});
 
 // ===================== FUNÇÕES DO JOGO =====================
 
 // Função de login
 async function entrarJogo() {
   const nome = document.getElementById("nomeAluno").value.trim();
-  if (!nome) {
-    alert("Digite seu nome!");
+  turma = document.getElementById("nomeTurma").value.trim();
+
+  if (!nome || !turma) {
+    alert("Por favor, digite seu nome e o nome da sua turma!");
+    return;
+  }
+
+  // Verifica se a turma existe no banco de dados
+  const turmaRef = doc(db, "turmas", turma);
+  const turmaSnap = await getDoc(turmaRef);
+  
+  if (!turmaSnap.exists()) {
+    alert(`A turma "${turma}" não existe. Verifique o nome ou peça para seu professor criá-la.`);
     return;
   }
 
   aluno = nome;
   document.getElementById("alunoNome").textContent = nome;
+  document.getElementById("rankingTurma").textContent = turma;
   document.getElementById("login").classList.add("hidden");
   document.getElementById("jogo").classList.remove("hidden");
 
@@ -66,7 +64,8 @@ async function entrarJogo() {
       alert("Bem-vindo de volta! Suas moedas foram restauradas.");
     }
   } else {
-    await setDoc(ref, { progresso: 0, coins: 10 });
+    // Agora salvamos a turma junto com o aluno
+    await setDoc(ref, { progresso: 0, coins: 10, turma: turma });
     progresso = 0;
     coins = 10;
     alert("Novo aluno cadastrado! Bom jogo!");
@@ -90,7 +89,7 @@ async function novaQuestao() {
 
   document.getElementById("questao").classList.remove("hidden");
   document.getElementById("pergunta").textContent = `Quanto é ${a} x ${b}?`;
-  document.getElementById("resposta").focus(); // Coloca o foco no campo de resposta
+  document.getElementById("resposta").focus();
 }
 
 // Verifica resposta
@@ -129,10 +128,13 @@ function atualizarTela() {
   document.getElementById("coins").textContent = coins;
 }
 
-// Ranking em tempo real
+// Ranking da turma em tempo real
 function carregarRanking() {
   const alunosRef = collection(db, "alunos");
-  onSnapshot(alunosRef, (snapshot) => {
+  // Agora filtramos por turma
+  const q = query(alunosRef, where("turma", "==", turma));
+
+  onSnapshot(q, (snapshot) => {
     const lista = document.getElementById("ranking");
     lista.innerHTML = "";
     snapshot.forEach(doc => {
