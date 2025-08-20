@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jogo da Glória - Tabuada</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>🎲 Jogo da Glória - Tabuada</h1>
+
+  <div id="login">
+    <input type="text" id="nomeAluno" placeholder="Digite seu nome">
+    <button onclick="entrarJogo()">Entrar</button>
+  </div>
+
+  <div id="jogo" class="hidden">
+    <p><strong>Aluno:</strong> <span id="alunoNome"></span></p>
+    <p><strong>Progresso:</strong> <span id="progresso"></span> níveis</p>
+    <p><strong>Moedas:</strong> <span id="coins"></span></p>
+
+    <button onclick="novaQuestao()">Responder Questão</button>
+    <div id="questao" class="hidden">
+      <p id="pergunta"></p>
+      <input type="number" id="resposta" placeholder="Sua resposta">
+      <button onclick="verificarResposta()">Enviar</button>
+    </div>
+
+    <h2>📊 Ranking dos Alunos</h2>
+    <ul id="ranking"></ul>
+  </div>
+
+  <!-- Firebase + Script principal -->
+  <script type="module" src="main.js"></script>
+</body>
+</html>
