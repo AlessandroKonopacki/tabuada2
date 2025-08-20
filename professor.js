@@ -18,7 +18,7 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
 // Senha do professor (Você pode mudar esta senha!)
-const SENHA_PROFESSOR = "123456";
+const SENHA_PROFESSOR = "atomo123'";
 
 // Função para fazer login
 function login() {
