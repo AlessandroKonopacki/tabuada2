@@ -80,7 +80,7 @@ function carregarTurmas() {
     });
 }
 
-// Carrega os alunos de uma turma específica
+// Carrega os alunos de uma turma específica (MODIFICADA)
 function gerenciarAlunos(nomeTurma) {
     document.getElementById("gerenciarTurmas").classList.add("hidden");
     document.getElementById("gerenciarAlunos").classList.remove("hidden");
@@ -100,20 +100,14 @@ function gerenciarAlunos(nomeTurma) {
             li.innerHTML = `
                 <strong>${docSnap.id}</strong> - Progresso: ${data.progresso} | Moedas: ${data.coins} | Tempo: ${data.tempoRestante || 'N/A'}s
                 <button onclick="resetarAluno('${docSnap.id}')">♻️ Resetar Aluno</button>
-                <button onclick="resetarTempo('${docSnap.id}')">⏳ Resetar Tempo</button>
                 <button onclick="excluirAluno('${docSnap.id}')">❌ Excluir Aluno</button>
+                <input type="number" id="tempoManual-${docSnap.id}" placeholder="Novo tempo (s)">
+                <button onclick="definirTempoManualmente('${docSnap.id}')">⏳ Definir Tempo</button>
             `;
 
             lista.appendChild(li);
         });
     });
-}
-
-// Resetar o tempo de um aluno
-async function resetarTempo(nome) {
-    const ref = doc(db, "alunos", nome);
-    await updateDoc(ref, { tempoRestante: tempoPadrao, coins: 10 });
-    alert(`Tempo do aluno ${nome} resetado e 10 moedas liberadas!`);
 }
 
 // Resetar o progresso de um aluno
@@ -123,7 +117,7 @@ async function resetarAluno(nome) {
     alert(`Progresso do aluno ${nome} resetado!`);
 }
 
-// Excluir um aluno (NOVA FUNÇÃO)
+// Excluir um aluno
 async function excluirAluno(nome) {
   if (confirm(`Tem certeza que deseja excluir o aluno ${nome}? Esta ação é irreversível.`)) {
     const ref = doc(db, "alunos", nome);
@@ -132,11 +126,26 @@ async function excluirAluno(nome) {
   }
 }
 
+// Definir o tempo de um aluno manualmente (NOVA FUNÇÃO)
+async function definirTempoManualmente(nome) {
+    const inputId = `tempoManual-${nome}`;
+    const novoTempo = parseInt(document.getElementById(inputId).value);
+
+    if (isNaN(novoTempo) || novoTempo < 0) {
+        alert("Por favor, digite um tempo válido (um número positivo).");
+        return;
+    }
+
+    const ref = doc(db, "alunos", nome);
+    await updateDoc(ref, { tempoRestante: novoTempo });
+    alert(`Tempo do aluno ${nome} definido para ${novoTempo} segundos!`);
+}
+
 // ===================== EXPOR FUNÇÕES PARA O HTML =====================
 window.loginProfessor = loginProfessor;
 window.criarTurma = criarTurma;
 window.carregarTurmas = carregarTurmas;
 window.gerenciarAlunos = gerenciarAlunos;
-window.resetarTempo = resetarTempo;
 window.resetarAluno = resetarAluno;
-window.excluirAluno = excluirAluno; // Expõe a nova função
+window.excluirAluno = excluirAluno;
+window.definirTempoManualmente = definirTempoManualmente; // Expõe a nova função
