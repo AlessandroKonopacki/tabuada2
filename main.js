@@ -1,6 +1,6 @@
 // Importa Firebase direto da CDN
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc, updateDoc, collection, onSnapshot, query, where, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 // Configuração do Firebase
 const firebaseConfig = {
@@ -17,172 +17,139 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
+// Variáveis de estado
 let aluno = null;
 let turma = null;
 let progresso = 0;
 let coins = 0;
 let respostaCorreta = 0;
+let tempoRestante = 0;
+let timerInterval = null;
+let alunoDocRef = null;
 
 const tempoPorPacote = 60;
-let tempoRestante = tempoPorPacote;
-let perguntasRespondidas = 0;
-let timerInterval = null;
-let alunoDocRef; // Variável para a referência do documento do aluno
 
-// ===================== EVENTOS DE TECLA =====================
-document.getElementById("nomeAluno").addEventListener("keydown", function(event) {
-    if (event.key === "Enter") {
-        entrarJogo();
-    }
-});
-
-document.getElementById("nomeTurma").addEventListener("keydown", function(event) {
-    if (event.key === "Enter") {
-        entrarJogo();
-    }
-});
-
-document.getElementById("resposta").addEventListener("keydown", function(event) {
-    if (event.key === "Enter") {
-        verificarResposta();
-    }
-});
-
-// ===================== FUNÇÕES DO JOGO =====================
-
-// Função de login (MODIFICADA)
+// Lógica para entrar no jogo
 async function entrarJogo() {
-  const nome = document.getElementById("nomeAluno").value.trim();
-  turma = document.getElementById("nomeTurma").value.trim();
+    const nomeAluno = document.getElementById("nomeAluno").value.trim();
+    const nomeTurma = document.getElementById("nomeTurma").value.trim();
 
-  if (!nome || !turma) {
-    alert("Por favor, digite seu nome e o nome da sua turma!");
-    return;
-  }
-
-  const turmaRef = doc(db, "turmas", turma);
-  const turmaSnap = await getDoc(turmaRef);
-  
-  if (!turmaSnap.exists()) {
-    alert(`A turma "${turma}" não existe. Verifique o nome ou peça para seu professor criá-la.`);
-    return;
-  }
-
-  aluno = nome;
-  alunoDocRef = doc(db, "alunos", aluno); // Define a referência do documento
-  
-  document.getElementById("alunoNome").textContent = nome;
-  document.getElementById("rankingTurma").textContent = turma;
-  document.getElementById("login").classList.add("hidden");
-  document.getElementById("jogo").classList.remove("hidden");
-
-  const snap = await getDoc(alunoDocRef);
-
-  if (snap.exists()) {
-    const dadosAluno = snap.data();
-    progresso = dadosAluno.progresso;
-    coins = dadosAluno.coins;
-    // Pega o tempo do banco de dados ao entrar no jogo (NOVO)
-    tempoRestante = dadosAluno.tempoRestante || tempoPorPacote;
-
-    if (coins <= 0) {
-      await updateDoc(alunoDocRef, { coins: 10 });
-      coins = 10;
-      alert("Bem-vindo de volta! Suas moedas foram restauradas.");
+    if (nomeAluno === "" || nomeTurma === "") {
+        alert("Por favor, preencha seu nome e o nome da turma.");
+        return;
     }
-  } else {
-    await setDoc(alunoDocRef, { progresso: 0, coins: 10, turma: turma, tempoRestante: tempoPorPacote });
-    progresso = 0;
-    coins = 10;
-    alert("Novo aluno cadastrado! Bom jogo!");
-  }
 
-  atualizarTela();
-  carregarRanking();
+    aluno = nomeAluno;
+    turma = nomeTurma;
+
+    alunoDocRef = doc(db, "alunos", aluno);
+
+    try {
+        const snap = await getDoc(alunoDocRef);
+
+        if (!snap.exists()) {
+            await setDoc(alunoDocRef, {
+                turma: turma,
+                progresso: 0,
+                coins: 10,
+                tempoRestante: tempoPorPacote,
+                dataUltimoLogin: serverTimestamp()
+            });
+            alert(`Bem-vindo, ${aluno}! Seu perfil foi criado.`);
+            progresso = 0;
+            coins = 10;
+            tempoRestante = tempoPorPacote;
+        } else {
+            const dadosAluno = snap.data();
+            progresso = dadosAluno.progresso;
+            coins = dadosAluno.coins;
+            tempoRestante = dadosAluno.tempoRestante || tempoPorPacote;
+            alert(`Bem-vindo de volta, ${aluno}!`);
+        }
+
+        document.getElementById("alunoNome").textContent = aluno;
+        document.getElementById("rankingTurma").textContent = turma;
+        
+        document.getElementById("login").classList.add("hidden");
+        document.getElementById("jogo").classList.remove("hidden");
+
+        atualizarTela();
+        carregarRanking();
+        
+        // Verifica se há tempo para iniciar o jogo
+        if (tempoRestante > 0) {
+            novaQuestao();
+        } else {
+            alert("Seu tempo acabou! Peça ao professor para adicionar mais tempo.");
+        }
+
+    } catch (e) {
+        console.error("Erro ao entrar no jogo: ", e);
+        alert("Ocorreu um erro ao tentar entrar. Verifique sua conexão ou tente novamente.");
+    }
 }
 
-// Função para iniciar o jogo
+// Lógica para iniciar o jogo
 function iniciarJogo() {
-  document.getElementById("btnIniciar").classList.add("hidden");
-  document.getElementById("btnParar").classList.remove("hidden");
-  document.getElementById("questaoContainer").classList.remove("hidden");
-  
-  perguntasRespondidas = 0;
-  
-  // Reseta o tempo no banco de dados
-  updateDoc(alunoDocRef, { tempoRestante: tempoPorPacote });
-
-  // Inicia o timer
-  timerInterval = setInterval(atualizarTempo, 1000);
-  
-  novaQuestao();
-}
-
-// Função para parar o jogo (MODIFICADA)
-function pararJogo() {
-  clearInterval(timerInterval);
-  document.getElementById("btnIniciar").classList.remove("hidden");
-  document.getElementById("btnParar").classList.add("hidden");
-  document.getElementById("questaoContainer").classList.add("hidden");
-  document.getElementById("resposta").value = "";
-  alert("Jogo pausado. Seu progresso foi salvo!");
-}
-
-// Atualiza o tempo na tela e no banco de dados (MODIFICADA)
-function atualizarTempo() {
-    tempoRestante--;
-    document.getElementById("tempo").textContent = tempoRestante;
-
-    // Atualiza o tempo no Firestore a cada segundo (ATENÇÃO: pode gerar muitas escritas)
-    updateDoc(alunoDocRef, { tempoRestante: tempoRestante });
-
-    if (tempoRestante <= 0) {
+    if (progresso === 0) {
+        novaQuestao();
+    }
+    document.getElementById("btnIniciar").classList.add("hidden");
+    document.getElementById("btnParar").classList.remove("hidden");
+    document.getElementById("questaoContainer").classList.remove("hidden");
+    
+    // Inicia o timer
+    if (timerInterval) {
         clearInterval(timerInterval);
-        alert("⏰ Tempo esgotado! Seu progresso foi salvo.");
-        pararJogo();
+    }
+    timerInterval = setInterval(() => {
+        tempoRestante--;
+        atualizarTela();
+        if (tempoRestante <= 0) {
+            clearInterval(timerInterval);
+            alert("Seu tempo acabou! Parando o jogo.");
+            pararJogo();
+        }
+    }, 1000);
+}
+
+// Lógica para parar e salvar o jogo
+async function pararJogo() {
+    clearInterval(timerInterval);
+    document.getElementById("btnIniciar").classList.remove("hidden");
+    document.getElementById("btnParar").classList.add("hidden");
+    document.getElementById("questaoContainer").classList.add("hidden");
+    
+    // Salva o estado atual no banco de dados
+    if (alunoDocRef) {
+        await updateDoc(alunoDocRef, { progresso, coins, tempoRestante });
+        alert("Progresso salvo com sucesso!");
     }
 }
 
-// Gera nova questão de tabuada (MODIFICADA)
-async function novaQuestao() {
-  if (coins <= 0) {
-    alert("⚠️ Você ficou sem moedas! Peça ao professor para liberar.");
-    document.getElementById("resposta").disabled = true;
-    document.getElementById("btnParar").disabled = true;
-    clearInterval(timerInterval); // Para o timer
+// Lógica para a próxima questão
+function novaQuestao() {
+  const num1 = Math.floor(Math.random() * 10) + 1;
+  const num2 = Math.floor(Math.random() * 10) + 1;
+  respostaCorreta = num1 * num2;
+  document.getElementById("pergunta").textContent = `Quanto é ${num1} x ${num2}?`;
+}
+
+// Lógica para verificar a resposta
+async function verificarResposta() {
+  const respostaAluno = parseInt(document.getElementById("resposta").value);
+  if (isNaN(respostaAluno)) {
+    alert("Por favor, digite um número.");
     return;
   }
   
-  if (perguntasRespondidas >= 10) {
-      alert("✅ Pacote de 10 questões completo! O tempo foi resetado e um novo pacote começou.");
-      iniciarJogo();
-      return;
-  }
-
-  const a = Math.floor(Math.random() * 9) + 1;
-  const b = Math.floor(Math.random() * 9) + 1;
-  respostaCorreta = a * b;
-
-  document.getElementById("pergunta").textContent = `Quanto é ${a} x ${b}?`;
-  document.getElementById("resposta").focus();
-}
-
-// Verifica resposta (MODIFICADA)
-async function verificarResposta() {
-  const resposta = parseInt(document.getElementById("resposta").value);
-  if (isNaN(resposta)) {
-      alert("Por favor, digite um número.");
-      return;
-  }
-  
-  if (resposta === respostaCorreta) {
+  if (respostaAluno === respostaCorreta) {
     progresso++;
-    coins += 5;
-    perguntasRespondidas++;
-    alert(`✅ Correto! Você ganhou 5 coins. Questão ${perguntasRespondidas}/10.`);
+    coins++;
+    alert("✅ Resposta correta!");
   } else {
-    coins -= 3;
-    alert(`❌ Errado! Perdeu 3 coins. Resposta correta: ${respostaCorreta}`);
+    coins--;
+    alert(`❌ Resposta incorreta! A resposta era ${respostaCorreta}`);
   }
 
   if (coins <= 0) {
@@ -190,11 +157,10 @@ async function verificarResposta() {
     alert("⚠️ Você ficou sem coins! Peça ao professor para liberar.");
     document.getElementById("resposta").disabled = true;
     document.getElementById("btnParar").disabled = true;
-    clearInterval(timerInterval); // Para o timer
+    clearInterval(timerInterval);
   }
 
   await updateDoc(alunoDocRef, { progresso, coins });
-
   atualizarTela();
   document.getElementById("resposta").value = "";
   novaQuestao();
@@ -207,22 +173,7 @@ function atualizarTela() {
   document.getElementById("tempo").textContent = tempoRestante;
 }
 
-// Ranking da turma em tempo real
-function carregarRanking() {
-  const alunosRef = collection(db, "alunos");
-  const q = query(alunosRef, where("turma", "==", turma));
-
-  onSnapshot(q, (snapshot) => {
-    const lista = document.getElementById("ranking");
-    lista.innerHTML = "";
-    snapshot.forEach(doc => {
-      const data = doc.data();
-      const li = document.createElement("li");
-      li.textContent = `${doc.id} - Progresso: ${data.progresso} | Coins: ${data.coins} | Tempo: ${data.tempoRestante || 'N/A'}`;
-      lista.appendChild(li);
-    });
-  });
-}
+// NOVO: Adiciona a função para atualizar o tempo do servidor
 async function atualizarTempoDoServidor() {
     const snap = await getDoc(alunoDocRef);
     if (snap.exists()) {
@@ -244,7 +195,6 @@ function carregarRanking() {
       alunos.push({ id: doc.id, ...doc.data() });
     });
 
-    // Ordena os alunos pelo progresso (do maior para o menor)
     alunos.sort((a, b) => b.progresso - a.progresso);
 
     const rankingTop3 = document.getElementById("rankingTop3");
@@ -252,7 +202,6 @@ function carregarRanking() {
     rankingTop3.innerHTML = "";
     rankingResto.innerHTML = "";
 
-    // Exibe os 3 primeiros
     alunos.slice(0, 3).forEach((aluno, index) => {
       const li = document.createElement("div");
       li.classList.add("ranking-item", `posicao-${index + 1}`);
@@ -264,7 +213,6 @@ function carregarRanking() {
       rankingTop3.appendChild(li);
     });
 
-    // Exibe o restante
     alunos.slice(3).forEach(aluno => {
       const li = document.createElement("li");
       li.textContent = `${aluno.id} - Progresso: ${aluno.progresso} | Coins: ${aluno.coins} | Tempo: ${aluno.tempoRestante || 'N/A'}`;
@@ -273,10 +221,11 @@ function carregarRanking() {
   });
 }
 
-// ... (código existente, adicione a nova função ao `window`)
-window.atualizarTempoDoServidor = atualizarTempoDoServidor;
+// ===================== EXPOR FUNÇÕES PARA O HTML =====================
+// Necessário porque o script é do tipo "module"
 window.entrarJogo = entrarJogo;
 window.iniciarJogo = iniciarJogo;
 window.pararJogo = pararJogo;
 window.novaQuestao = novaQuestao;
 window.verificarResposta = verificarResposta;
+window.atualizarTempoDoServidor = atualizarTempoDoServidor;
