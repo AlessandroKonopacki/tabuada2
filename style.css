@@ -162,3 +162,84 @@ button:hover {
   font-weight: bold;
   color: #d9534f; /* Cor vermelha para o tempo */
 }
+
+.header-jogo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 10px;
+}
+
+.header-left {
+  flex-basis: 100%;
+  text-align: left;
+  margin-bottom: 10px;
+}
+
+#btnAtualizarTempo {
+  background-color: #28a745;
+}
+
+#btnAtualizarTempo:hover {
+  background-color: #218838;
+}
+
+/* NOVO: Estilos para o ranking */
+.ranking-container {
+  margin-top: 30px;
+}
+
+#rankingTop3 {
+  display: flex;
+  justify-content: space-around;
+  align-items: flex-end;
+  margin-bottom: 20px;
+}
+
+.ranking-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-weight: bold;
+  padding: 15px;
+  border-radius: 10px;
+  width: 30%;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  transition: transform 0.3s ease;
+}
+
+.ranking-item.posicao-1 {
+  background: #ffcc00;
+  transform: scale(1.1);
+  border: 3px solid #e6b800;
+}
+
+.ranking-item.posicao-2 {
+  background: #c0c0c0;
+  border: 3px solid #a8a8a8;
+}
+
+.ranking-item.posicao-3 {
+  background: #cd7f32;
+  border: 3px solid #b36e29;
+}
+
+.ranking-item:hover {
+  transform: translateY(-5px);
+}
+
+.ranking-item .posicao {
+  font-size: 1.5em;
+  margin-bottom: 5px;
+}
+
+.ranking-item .nome {
+  font-size: 1.2em;
+}
+
+.ranking-item .pontuacao {
+  font-size: 1em;
+  color: #555;
+  margin-top: 5px;
+}

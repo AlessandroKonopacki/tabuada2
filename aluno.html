@@ -18,6 +18,9 @@
 
   <div id="jogo" class="hidden">
     <div class="header-jogo">
+      <div class="header-left">
+        <button id="btnAtualizarTempo" onclick="atualizarTempoDoServidor()">🔄 Atualizar Tempo</button>
+      </div>
       <p><strong>Aluno:</strong> <span id="alunoNome"></span></p>
       <p><strong>Progresso:</strong> <span id="progresso"></span></p>
       <p><strong>Moedas:</strong> <span id="coins"></span></p>
@@ -35,8 +38,11 @@
       <button onclick="verificarResposta()">Enviar</button>
     </div>
     
-    <h2>📊 Ranking da Turma: <span id="rankingTurma"></span></h2>
-    <ul id="ranking"></ul>
+    <div class="ranking-container">
+      <h2>📊 Ranking da Turma: <span id="rankingTurma"></span></h2>
+      <div id="rankingTop3"></div>
+      <ul id="ranking"></ul>
+    </div>
   </div>
 
   <script type="module" src="main.js"></script>

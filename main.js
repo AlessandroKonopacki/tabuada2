@@ -223,8 +223,58 @@ function carregarRanking() {
     });
   });
 }
+async function atualizarTempoDoServidor() {
+    const snap = await getDoc(alunoDocRef);
+    if (snap.exists()) {
+        const dadosAluno = snap.data();
+        tempoRestante = dadosAluno.tempoRestante || tempoPorPacote;
+        alert(`Tempo atualizado para ${tempoRestante} segundos.`);
+        atualizarTela();
+    }
+}
 
-// Expõe funções ao HTML
+// NOVO: Modifica a função carregarRanking
+function carregarRanking() {
+  const alunosRef = collection(db, "alunos");
+  const q = query(alunosRef, where("turma", "==", turma));
+
+  onSnapshot(q, (snapshot) => {
+    const alunos = [];
+    snapshot.forEach(doc => {
+      alunos.push({ id: doc.id, ...doc.data() });
+    });
+
+    // Ordena os alunos pelo progresso (do maior para o menor)
+    alunos.sort((a, b) => b.progresso - a.progresso);
+
+    const rankingTop3 = document.getElementById("rankingTop3");
+    const rankingResto = document.getElementById("ranking");
+    rankingTop3.innerHTML = "";
+    rankingResto.innerHTML = "";
+
+    // Exibe os 3 primeiros
+    alunos.slice(0, 3).forEach((aluno, index) => {
+      const li = document.createElement("div");
+      li.classList.add("ranking-item", `posicao-${index + 1}`);
+      li.innerHTML = `
+        <span class="posicao">${index + 1}º</span>
+        <span class="nome">${aluno.id}</span>
+        <span class="pontuacao">🏆 ${aluno.progresso}</span>
+      `;
+      rankingTop3.appendChild(li);
+    });
+
+    // Exibe o restante
+    alunos.slice(3).forEach(aluno => {
+      const li = document.createElement("li");
+      li.textContent = `${aluno.id} - Progresso: ${aluno.progresso} | Coins: ${aluno.coins} | Tempo: ${aluno.tempoRestante || 'N/A'}`;
+      rankingResto.appendChild(li);
+    });
+  });
+}
+
+// ... (código existente, adicione a nova função ao `window`)
+window.atualizarTempoDoServidor = atualizarTempoDoServidor;
 window.entrarJogo = entrarJogo;
 window.iniciarJogo = iniciarJogo;
 window.pararJogo = pararJogo;
